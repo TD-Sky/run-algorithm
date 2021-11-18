@@ -1,6 +1,6 @@
 use super::VertNotInGraph;
-use mst::{LazyPrimMST, PrimMST};
-use std::collections::HashMap;
+use mst::{KruskalMST, LazyPrimMST, PrimMST};
+use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use std::rc::{Rc, Weak};
 
@@ -86,11 +86,21 @@ impl<'a, V> UnGraph<'a, V> {
             .and_modify(|vert| vert.adj.push(Rc::clone(&adj_edge)));
     }
 
-    fn edges(&'a self, vid: u32) -> Result<&'a Vec<Rc<Edge>>, VertNotInGraph> {
+    fn adj_edges(&'a self, vid: u32) -> Result<&'a Vec<Rc<Edge>>, VertNotInGraph> {
         match self.adj_table.get(&vid) {
             Some(vert) => Ok(&vert.adj),
             None => Err(VertNotInGraph),
         }
+    }
+
+    fn edges(&'a self) -> HashSet<Rc<Edge>> {
+        let mut edges = HashSet::new();
+        for vert in self.adj_table.values() {
+            for edge in &vert.adj {
+                edges.insert(Rc::clone(edge));
+            }
+        }
+        edges
     }
 
     fn vids(&self) -> impl Iterator<Item = u32> + '_ {
@@ -107,5 +117,9 @@ impl<'a, V> UnGraph<'a, V> {
 
     fn prim_mst(&self, src: u32) -> Vec<Weak<Edge>> {
         PrimMST::new(self).span(src)
+    }
+
+    fn kruskal_mst(&self) -> Vec<Weak<Edge>> {
+        KruskalMST::new(self).span()
     }
 }

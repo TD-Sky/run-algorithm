@@ -29,6 +29,8 @@ fn test_lazy_prim_mst() -> io::Result<()> {
     let stdout = io::stdout();
     let mut handle = stdout.lock();
     let ms_tree = graph.lazy_prim_mst(0);
+
+    handle.write(b"lazy_prim_mst\n")?;
     for edge in ms_tree {
         handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
     }
@@ -42,6 +44,23 @@ fn test_prim_mst() -> io::Result<()> {
     let stdout = io::stdout();
     let mut handle = stdout.lock();
     let ms_tree = graph.prim_mst(0);
+
+    handle.write(b"prim_mst\n")?;
+    for edge in ms_tree {
+        handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
+    }
+    handle.write(b"\n")?;
+    Ok(())
+}
+
+#[test]
+fn test_kruskal_mst() -> io::Result<()> {
+    let graph = sample_graph();
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
+    let ms_tree = graph.kruskal_mst();
+
+    handle.write(b"kruskal_mst\n")?;
     for edge in ms_tree {
         handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
     }
