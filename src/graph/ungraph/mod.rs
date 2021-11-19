@@ -89,7 +89,7 @@ impl<'a, V> UnGraph<'a, V> {
     fn adj_edges(&'a self, vid: u32) -> Result<&'a Vec<Rc<Edge>>, VertNotInGraph> {
         match self.adj_table.get(&vid) {
             Some(vert) => Ok(&vert.adj),
-            None => Err(VertNotInGraph),
+            None => Err(VertNotInGraph(vid)),
         }
     }
 
@@ -111,12 +111,18 @@ impl<'a, V> UnGraph<'a, V> {
         self.adj_table.len()
     }
 
-    fn lazy_prim_mst(&self, src: u32) -> Vec<Weak<Edge>> {
-        LazyPrimMST::new(self).span(src)
+    fn lazy_prim_mst(&self, root: u32) -> Result<Vec<Weak<Edge>>, VertNotInGraph> {
+        self.adj_table
+            .contains_key(&root)
+            .then_some(LazyPrimMST::new(self).span(root))
+            .ok_or(VertNotInGraph(root))
     }
 
-    fn prim_mst(&self, src: u32) -> Vec<Weak<Edge>> {
-        PrimMST::new(self).span(src)
+    fn prim_mst(&self, root: u32) -> Result<Vec<Weak<Edge>>, VertNotInGraph> {
+        self.adj_table
+            .contains_key(&root)
+            .then_some(PrimMST::new(self).span(root))
+            .ok_or(VertNotInGraph(root))
     }
 
     fn kruskal_mst(&self) -> Vec<Weak<Edge>> {

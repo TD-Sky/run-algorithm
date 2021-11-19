@@ -25,14 +25,47 @@ pub struct DiGraph<'a, V = ()> {
 
 #[allow(dead_code)]
 impl<'a, V> DiGraph<'a, V> {
-    fn new() -> Self {
+    fn add_vert(&mut self, vid: u32, vert: V) {
+        self.adj_table.entry(vid).or_insert(Vertex::new(vert));
+    }
+
+    fn neighbours(&'a self, vid: u32) -> Result<&'a Vec<u32>, VertNotInGraph> {
+        match self.adj_table.get(&vid) {
+            Some(vert) => Ok(&vert.neighbours),
+            None => Err(VertNotInGraph(vid)),
+        }
+    }
+
+    fn bfs(&self, src: u32, marked: &mut HashSet<u32>, edge_to: &mut HashMap<u32, u32>) {
+        marked.insert(src);
+        let mut vid_queue: VecDeque<u32> = VecDeque::new();
+        vid_queue.push_front(src);
+
+        // 搜索会遍历所有节点
+        while !vid_queue.is_empty() {
+            let vid = vid_queue.pop_back().unwrap();
+            for neighbour in self.neighbours(vid).unwrap() {
+                if marked.insert(*neighbour) {
+                    // 核心功能：构建邻接边表
+                    edge_to.insert(*neighbour, vid);
+
+                    vid_queue.push_front(*neighbour);
+                }
+            }
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl<'a, V> DiGraph<'a, V> {
+    pub fn new() -> Self {
         Self {
             adj_table: HashMap::new(),
             marker: PhantomData,
         }
     }
 
-    fn add_edge(&mut self, edge: (u32, u32), start: V, end: V) {
+    pub fn add_edge(&mut self, edge: (u32, u32), start: V, end: V) {
         self.add_vert(edge.0, start);
         self.add_vert(edge.1, end);
 
@@ -41,15 +74,11 @@ impl<'a, V> DiGraph<'a, V> {
         });
     }
 
-    fn add_vert(&mut self, vid: u32, vert: V) {
-        self.adj_table.entry(vid).or_insert(Vertex::new(vert));
-    }
-
-    fn contains_vert(&self, vid: u32) -> bool {
+    pub fn contains_vert(&self, vid: u32) -> bool {
         self.adj_table.contains_key(&vid)
     }
 
-    fn edges(&self) -> Vec<(u32, u32)> {
+    pub fn edges(&self) -> Vec<(u32, u32)> {
         let mut edges = Vec::new();
         for (vid, start) in &self.adj_table {
             for end in &start.neighbours {
@@ -59,49 +88,18 @@ impl<'a, V> DiGraph<'a, V> {
         edges
     }
 
-    fn neighbours(&'a self, vid: u32) -> Result<&'a Vec<u32>, VertNotInGraph> {
-        match self.adj_table.get(&vid) {
-            Some(vert) => Ok(&vert.neighbours),
-            None => Err(VertNotInGraph),
-        }
-    }
-
-    fn vs(&self) -> usize {
+    pub fn vs(&self) -> usize {
         self.adj_table.len()
     }
 
-    fn shortest_path(&'a self, src: u32, dest: u32) -> Option<VecDeque<u32>>
+    pub fn shortest_path(&'a self, src: u32, dest: u32) -> Option<VecDeque<u32>>
     where
         Self: Sized,
     {
-        fn bfs<'a, V>(
-            graph: &'a DiGraph<'a, V>,
-            src: u32,
-            marked: &mut HashSet<u32>,
-            edge_to: &mut HashMap<u32, u32>,
-        ) {
-            marked.insert(src);
-            let mut vid_queue: VecDeque<u32> = VecDeque::new();
-            vid_queue.push_front(src);
-
-            // 搜索会遍历所有节点
-            while !vid_queue.is_empty() {
-                let vid = vid_queue.pop_back().unwrap();
-                for neighbour in graph.neighbours(vid).unwrap() {
-                    if marked.insert(*neighbour) {
-                        // 核心功能：构建邻接边表
-                        edge_to.insert(*neighbour, vid);
-
-                        vid_queue.push_front(*neighbour);
-                    }
-                }
-            }
-        }
-
         let mut marked: HashSet<u32> = HashSet::with_capacity(self.vs());
         let mut edge_to: HashMap<u32, u32> = HashMap::with_capacity(self.vs());
 
-        bfs(self, src, &mut marked, &mut edge_to);
+        self.bfs(src, &mut marked, &mut edge_to);
 
         marked.contains(&dest).then(|| {
             let mut path: VecDeque<u32> = VecDeque::new();

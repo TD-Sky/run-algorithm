@@ -1,4 +1,4 @@
-use super::UnGraph;
+use super::{Edge, UnGraph};
 use std::io::{self, Write};
 use std::rc::Weak;
 
@@ -23,47 +23,39 @@ fn sample_graph<'a>() -> UnGraph<'a, ()> {
     graph
 }
 
-#[test]
-fn test_lazy_prim_mst() -> io::Result<()> {
-    let graph = sample_graph();
+fn test_io(ms_tree: Vec<Weak<Edge>>, name: &str) -> io::Result<()> {
     let stdout = io::stdout();
     let mut handle = stdout.lock();
-    let ms_tree = graph.lazy_prim_mst(0);
 
-    handle.write(b"lazy_prim_mst\n")?;
+    handle.write(name.as_bytes())?;
     for edge in ms_tree {
         handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
     }
     handle.write(b"\n")?;
+
     Ok(())
 }
 
 #[test]
-fn test_prim_mst() -> io::Result<()> {
+#[allow(unused_must_use)]
+fn test_lazy_prim_mst() {
     let graph = sample_graph();
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
-    let ms_tree = graph.prim_mst(0);
-
-    handle.write(b"prim_mst\n")?;
-    for edge in ms_tree {
-        handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
-    }
-    handle.write(b"\n")?;
-    Ok(())
+    let ms_tree = graph.lazy_prim_mst(0).unwrap();
+    test_io(ms_tree, "lazy_prim_mst\n");
 }
 
 #[test]
-fn test_kruskal_mst() -> io::Result<()> {
+#[allow(unused_must_use)]
+fn test_prim_mst() {
     let graph = sample_graph();
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
+    let ms_tree = graph.prim_mst(0).unwrap();
+    test_io(ms_tree, "prim_mst\n");
+}
+
+#[test]
+#[allow(unused_must_use)]
+fn test_kruskal_mst() {
+    let graph = sample_graph();
     let ms_tree = graph.kruskal_mst();
-
-    handle.write(b"kruskal_mst\n")?;
-    for edge in ms_tree {
-        handle.write_fmt(format_args!("{:?}\n", Weak::upgrade(&edge).unwrap()))?;
-    }
-    handle.write(b"\n")?;
-    Ok(())
+    test_io(ms_tree, "kruskal_mst\n");
 }
