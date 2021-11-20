@@ -3,7 +3,7 @@ mod ungraph;
 
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct VertNotInGraph(u32);
 
 impl fmt::Display for VertNotInGraph {
