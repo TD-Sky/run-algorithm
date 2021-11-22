@@ -1,18 +1,16 @@
 use super::Node;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::marker::PhantomData;
 use std::mem;
 
 #[allow(dead_code)]
-struct LinearHashMap<'a, K: Eq + Hash, V> {
+struct LinearHashMap<K: Eq + Hash, V> {
     base: Vec<Option<Node<K, V>>>,
     len: usize,
     capacity: u64,
-    marker: PhantomData<&'a V>,
 }
 
-impl<'a, K, V> LinearHashMap<'a, K, V>
+impl<K, V> LinearHashMap<K, V>
 where
     K: Eq + Hash,
 {
@@ -57,7 +55,7 @@ where
 }
 
 #[allow(dead_code)]
-impl<'a, K, V> LinearHashMap<'a, K, V>
+impl<K, V> LinearHashMap<K, V>
 where
     K: Eq + Hash,
 {
@@ -69,7 +67,6 @@ where
             base,
             len: 0,
             capacity,
-            marker: PhantomData,
         }
     }
 
@@ -149,7 +146,7 @@ mod tests {
 
     #[test]
     fn crud_linear_hashmap() {
-        let mut map: LinearHashMap<'_, u32, &str> = LinearHashMap::new();
+        let mut map: LinearHashMap<u32, &str> = LinearHashMap::new();
         assert_eq!(map.insert(15, "Mike"), None);
         assert_eq!(map.remove(&15), Some("Mike"));
         assert_eq!(map.contains_key(&15), false);

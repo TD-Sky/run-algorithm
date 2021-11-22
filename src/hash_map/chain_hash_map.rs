@@ -2,17 +2,15 @@ use super::Node;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::LinkedList;
 use std::hash::{Hash, Hasher};
-use std::marker::PhantomData;
 
 #[allow(dead_code)]
-struct ChainHashMap<'a, K: Eq + Hash, V> {
+struct ChainHashMap<K: Eq + Hash, V> {
     base: Vec<LinkedList<Node<K, V>>>,
     len: usize,
     dvs: u64,
-    marker: PhantomData<&'a V>,
 }
 
-impl<'a, K, V> ChainHashMap<'a, K, V>
+impl<K, V> ChainHashMap<K, V>
 where
     K: Eq + Hash,
 {
@@ -24,7 +22,7 @@ where
 }
 
 #[allow(dead_code)]
-impl<'a, K, V> ChainHashMap<'a, K, V>
+impl<K, V> ChainHashMap<K, V>
 where
     K: Eq + Hash,
 {
@@ -33,12 +31,7 @@ where
         let mut base = Vec::with_capacity(dvs as usize);
         (0..dvs).for_each(|_| base.push(LinkedList::new()));
 
-        Self {
-            dvs,
-            base,
-            len: 0,
-            marker: PhantomData,
-        }
+        Self { dvs, base, len: 0 }
     }
 
     pub fn insert(&mut self, key: K, val: V) -> Option<V> {
@@ -88,9 +81,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::ChainHashMap;
+
     #[test]
     fn crud_chain_hashmap() {
-        let mut map: ChainHashMap<'_, u64, &str> = ChainHashMap::new();
+        let mut map: ChainHashMap<u64, &str> = ChainHashMap::new();
 
         assert_eq!(map.insert(15, "Mike"), None);
         assert_eq!(map.remove(&15), Some("Mike"));
