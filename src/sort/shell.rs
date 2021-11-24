@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 fn shell<T: Ord>(arr: &mut [T]) {
     // 初始化间隔
     let mut itrval = 1;
