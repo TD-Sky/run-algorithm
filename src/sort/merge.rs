@@ -16,12 +16,14 @@ where
     fn sort_bottom_to_top(&mut self) {
         let len = self.arr.len();
         // 子数组的长度，同一循环内子数组按 size 切分
-        for size in (1..len).filter(|&n| n % 2 == 0 || n == 1) {
+        let mut size = 1;
+        while size < len {
             // 两两归并子数组，故 low 为左数组首索引
             for low in (0..(len - size)).step_by(size * 2) {
                 // 两两归并时，右子数组长度可能为 [0, size]
                 self.merge(low, low + size - 1, (low + size * 2 - 1).min(len - 1));
             }
+            size *= 2;
         }
     }
 
@@ -94,6 +96,12 @@ mod tests {
         let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
         MergeSort::new(&mut arr).run(super::Order::BT);
         assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
+    }
+
+    #[test]
+    fn test_empty() {
+        let mut arr: [u32; 0] = [];
+        MergeSort::new(&mut arr).run(super::Order::BT);
     }
 
     #[test]
