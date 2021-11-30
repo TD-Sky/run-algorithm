@@ -16,14 +16,12 @@ where
     fn sort_bottom_to_top(&mut self) {
         let len = self.arr.len();
         // 子数组的长度，同一循环内子数组按 size 切分
-        let mut size = 1;
-        while size < len {
+        for size in (0u32..).map(|n| 2usize.pow(n)).take_while(|&sz| sz < len) {
             // 两两归并子数组，故 low 为左数组首索引
             for low in (0..(len - size)).step_by(size * 2) {
                 // 两两归并时，右子数组长度可能为 [0, size]
                 self.merge(low, low + size - 1, (low + size * 2 - 1).min(len - 1));
             }
-            size *= 2;
         }
     }
 
