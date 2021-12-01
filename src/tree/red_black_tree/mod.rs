@@ -18,16 +18,24 @@ impl<'a, V> RBTMap<'a, V> {
     }
 
     pub fn insert(&mut self, key: u32, value: V) {
-        match &mut self.root {
+        match self.root.as_mut() {
             None => self.root = Some(Box::new(Vertex::new(key, value, Color::Black))),
-            Some(vertex) => {
-                vertex.as_mut().insert(key, value);
-                vertex.blacken();
+            Some(root) => {
+                root.insert(key, value);
+                root.blacken();
             }
         }
     }
 
+    /* pub fn remove(&mut self, key: u32) -> Option<V> {
+        self.root.as_mut().map(|vertex| vertex.remove(key))
+    } */
+
+    /* pub fn pop_min(&mut self) -> Option<V> {
+        self.root.as_mut().map(|root| root.pop_min())
+    } */
+
     pub fn preorder(&self) -> Option<iterator::PreorderIter<V>> {
-        self.root.as_ref().map(|vertex| vertex.as_ref().preorder())
+        self.root.as_ref().map(|root| root.preorder())
     }
 }
