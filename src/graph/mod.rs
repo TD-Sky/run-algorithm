@@ -11,3 +11,6 @@ impl fmt::Display for VertNotInGraph {
         write!(f, "vertex {} is not in the graph", self.0)
     }
 }
+
+pub use digraph::DiGraph;
+pub use ungraph::UnGraph;
