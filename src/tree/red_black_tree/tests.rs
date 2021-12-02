@@ -15,7 +15,7 @@ fn test_insert() {
     );
 }
 
-/* #[test]
+#[test]
 fn test_pop_min() {
     let mut map: RBTMap<&str> = RBTMap::new();
 
@@ -24,4 +24,21 @@ fn test_pop_min() {
     map.insert(2, "Peter");
 
     assert_eq!(map.pop_min().unwrap(), "Marry");
-} */
+    assert_eq!(map.pop_min().unwrap(), "Mike");
+    assert_eq!(map.pop_min().unwrap(), "Peter");
+    assert_eq!(map.pop_min(), None);
+}
+
+#[test]
+fn test_remove() {
+    let mut map: RBTMap<&str> = RBTMap::new();
+
+    map.insert(0, "Marry");
+    map.insert(1, "Mike");
+    map.insert(2, "Peter");
+
+    assert_eq!(map.remove(0).unwrap(), "Marry");
+    assert_eq!(map.remove(4), None);
+    assert_eq!(map.remove(2).unwrap(), "Peter");
+    assert_eq!(map.remove(1).unwrap(), "Mike");
+}
