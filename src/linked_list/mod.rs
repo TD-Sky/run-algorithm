@@ -38,7 +38,7 @@ impl<T> LinkedList<T> {
         unsafe {
             node.next = self.head;
             node.prev = None;
-            let node = Some(Box::leak(node).into());
+            let node: Option<NonNull<Node<T>>> = Some(Box::leak(node).into());
 
             match self.head {
                 None => self.tail = node,
