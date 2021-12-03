@@ -55,3 +55,13 @@ fn test_get() {
     assert_eq!(map.get(&2), Some(&"John"));
     assert_eq!(map.get(&3), Some(&"Peter"));
 }
+
+#[test]
+fn string_string_sample() {
+    let mut map: RBTMap<&str, &str> = RBTMap::new();
+
+    map.insert("Marry", "玛丽");
+    map.insert("Mike", "迈克");
+    map.insert("John", "约翰");
+    map.insert("Peter", "彼得");
+}
