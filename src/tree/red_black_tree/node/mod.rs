@@ -10,12 +10,12 @@ pub(super) enum Color {
     Black,
 }
 
-pub(super) struct Vertex<'a, V> {
+pub(super) struct Node<'a, K: Ord, V> {
     color: Color,
-    key: u32,
+    key: K,
     value: V,
-    left: Option<Box<Vertex<'a, V>>>,
-    right: Option<Box<Vertex<'a, V>>>,
+    left: Option<Box<Node<'a, K, V>>>,
+    right: Option<Box<Node<'a, K, V>>>,
     marker: PhantomData<&'a V>,
 }
 
@@ -39,12 +39,15 @@ impl Color {
     }
 }
 
-impl<'a, V> Vertex<'a, V> {
+impl<'a, K, V> Node<'a, K, V>
+where
+    K: Ord,
+{
     /* 链接颜色判定方法 */
 
-    fn is_red(opt: &Option<Box<Vertex<'a, V>>>) -> bool {
+    fn is_red(opt_node: &Option<Box<Node<'a, K, V>>>) -> bool {
         // 空链接视为黑
-        opt.as_ref().map_or(false, |vertex| vertex.color.is_red())
+        opt_node.as_ref().map_or(false, |node| node.color.is_red())
     }
 
     fn has_red_right(&self) -> bool {
@@ -162,8 +165,11 @@ impl<'a, V> Vertex<'a, V> {
     }
 }
 
-impl<'a, V> Vertex<'a, V> {
-    pub(super) fn new(key: u32, value: V, color: Color) -> Self {
+impl<'a, K, V> Node<'a, K, V>
+where
+    K: Ord,
+{
+    pub(super) fn new(key: K, value: V, color: Color) -> Self {
         Self {
             color,
             key,
@@ -175,58 +181,68 @@ impl<'a, V> Vertex<'a, V> {
     }
 
     // 摧毁叶子节点，获得其值
-    pub(super) fn into_value(vertex: Box<Self>) -> V {
-        vertex.value
+    pub(super) fn into_value(node: Box<Self>) -> V {
+        node.value
     }
 
     pub(super) fn blacken(&mut self) {
         self.color = Color::Black;
     }
 
-    pub(super) fn insert(&mut self, key: u32, value: V) {
-        match self.key.cmp(&key) {
-            Ordering::Equal => self.value = value,
+    pub(super) fn insert(&mut self, key: K, value: V) -> Option<V> {
+        let res = match self.key.cmp(&key) {
+            Ordering::Equal => Some(mem::replace(&mut self.value, value)),
+
             Ordering::Less => match self.right.as_mut() {
                 Some(right) => right.insert(key, value),
-                None => self.right = Some(Box::new(Vertex::new(key, value, Color::Red))),
+                None => {
+                    self.right = Some(Box::new(Node::new(key, value, Color::Red)));
+                    None
+                }
             },
+
             Ordering::Greater => match self.left.as_mut() {
                 Some(left) => left.insert(key, value),
-                None => self.left = Some(Box::new(Vertex::new(key, value, Color::Red))),
+                None => {
+                    self.left = Some(Box::new(Node::new(key, value, Color::Red)));
+                    None
+                }
             },
-        }
+        };
 
         self.rebalance();
+
+        res
     }
 
-    pub(super) fn pop_min_vertex(opt_vert: *mut Option<Box<Self>>) -> Box<Self> {
+    pub(super) fn pop_min_node(opt_node: *mut Option<Box<Self>>) -> Box<Self> {
         // 删除节点不能破坏树的平衡，因此只要删除红节点即可。
         // 为了保证总是删除红节点，我们先进行局部重构，令
         // 当前节点 或 当前节点之左 为红。
         unsafe {
-            (&mut *opt_vert)
+            (&mut *opt_node)
                 .as_mut()
-                .map(|vert| {
-                    let opt_left: *mut Option<Box<Self>> = &mut vert.left;
+                .and_then(|node| {
+                    let opt_left: *mut Option<Box<Self>> = &mut node.left;
 
                     match &mut *opt_left {
-                        None => (&mut *opt_vert).take().unwrap(),
+                        None => (&mut *opt_node).take(),
                         Some(left) => {
                             // 捏红节点
                             // 若节点的左和左之左都为黑，
                             // 则借取节点以拼接，使子节点形成3/4-节点。
                             // 若左之左为红，说明仍有更小的节点存在，可以直接往下；
                             // 同时，这也说明左键在一个3-节点内，无需再借用拼接。
-                            if !(vert.has_red_left() || left.has_red_left()) {
+                            if !(node.has_red_left() || left.has_red_left()) {
                                 // 2-3-4树左旋式局部重整
-                                vert.restruct_left();
+                                node.restruct_left();
                             }
 
-                            let min_vert = Self::pop_min_vertex(opt_left);
+                            let min_node = Self::pop_min_node(opt_left);
 
-                            vert.rebalance();
+                            node.rebalance();
 
-                            min_vert
+                            Some(min_node)
                         }
                     }
                 })
@@ -234,44 +250,55 @@ impl<'a, V> Vertex<'a, V> {
         }
     }
 
-    pub(super) fn remove_vertex(opt_vert: *mut Option<Box<Self>>, key: u32) -> Option<Box<Self>> {
+    pub(super) fn remove_node(opt_node: *mut Option<Box<Self>>, key: &K) -> Option<Box<Self>> {
         unsafe {
-            (&mut *opt_vert).as_mut().map(|vert| {
-                let removal = if key < vert.key {
-                    if !(vert.has_red_left() || vert.has_red_left_left()) {
-                        vert.restruct_left();
+            (&mut *opt_node).as_mut().and_then(|node| {
+                let removal = if *key < node.key {
+                    if !(node.has_red_left() || node.has_red_left_left()) {
+                        node.restruct_left();
                     }
-                    Self::remove_vertex(&mut vert.left, key)
+                    Self::remove_node(&mut node.left, key)
                 } else {
-                    if vert.has_red_left() {
-                        vert.rot_right();
+                    if node.has_red_left() {
+                        node.rot_right();
                     }
 
-                    if key == vert.key && vert.right.is_none() {
-                        return (&mut *opt_vert).take();
+                    if *key == node.key && node.right.is_none() {
+                        return (&mut *opt_node).take();
                     }
 
-                    if !(vert.has_red_right() || vert.has_red_right_left()) {
-                        vert.restruct_right();
+                    if !(node.has_red_right() || node.has_red_right_left()) {
+                        node.restruct_right();
                     }
 
-                    if key == vert.key {
-                        vert.swap_successor();
-                        Some(Self::pop_min_vertex(&mut vert.right))
+                    if *key == node.key {
+                        node.swap_successor();
+                        Some(Self::pop_min_node(&mut node.right))
                     } else {
-                        Self::remove_vertex(&mut vert.right, key)
+                        Self::remove_node(&mut node.right, key)
                     }
                 };
-                vert.rebalance();
+                node.rebalance();
                 removal
-            })?
+            })
+        }
+    }
+
+    pub(super) fn get(&self, key: &K) -> Option<&V> {
+        match self.key.cmp(key) {
+            Ordering::Equal => Some(&self.value),
+            Ordering::Less => self.right.as_ref().and_then(|right| right.get(key)),
+            Ordering::Greater => self.left.as_ref().and_then(|left| left.get(key)),
         }
     }
 }
 
 // 迭代器方法
-impl<'a, V> Vertex<'a, V> {
-    pub(super) fn preorder(&'a self) -> PreorderIter<'a, V> {
-        PreorderIter::new(self)
+impl<'a, K, V> Node<'a, K, V>
+where
+    K: Ord,
+{
+    pub(super) fn preorder(&'a self, cap: usize) -> PreorderIter<'a, K, V> {
+        PreorderIter::with_capacity(self, cap)
     }
 }
