@@ -146,20 +146,19 @@ impl<'a, V> Vertex<'a, V> {
 
     /* 交换键、值 */
     fn swap_successor(&mut self) {
-        unsafe {
-            // 函数入口上下文：
-            // - 删除键已匹配
-            // - 传入节点必有右节点
+        // 函数入口上下文：
+        // - 删除键已匹配
+        // - 传入节点必有右节点
+        // - 右节点与传入节点交换键值后，后继结点会立刻删除
 
-            // 寻找传入节点右子树的最小节点
-            let mut successor: *mut Box<Self> = self.right.as_mut().unwrap();
-            while let Some(left) = &mut (*successor).left {
-                successor = left;
-            }
-
-            mem::swap(&mut self.key, &mut (*successor).key);
-            mem::swap(&mut self.value, &mut (*successor).value);
+        // 寻找传入节点右子树的最小节点
+        let mut successor: &mut Box<Self> = self.right.as_mut().unwrap();
+        while let Some(left) = &mut successor.left {
+            successor = left;
         }
+
+        mem::swap(&mut self.key, &mut successor.key);
+        mem::swap(&mut self.value, &mut successor.value);
     }
 }
 
