@@ -29,23 +29,22 @@ where
     }
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
+        self.len += 1;
         match self.root.as_mut() {
             None => {
                 self.root = Some(Box::new(Node::new(key, value, Color::Black)));
-                self.len += 1;
                 None
             }
 
             Some(root) => {
                 let res = root.insert(key, value);
 
-                if res.is_none() {
-                    self.len += 1;
-                }
-
                 root.blacken();
 
-                res
+                res.map(|val| {
+                    self.len -= 1;
+                    val
+                })
             }
         }
     }
