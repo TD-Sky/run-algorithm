@@ -30,6 +30,7 @@ where
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         self.len += 1;
+
         match self.root.as_mut() {
             None => {
                 self.root = Some(Box::new(Node::new(key, value, Color::Black)));
