@@ -92,4 +92,8 @@ where
     pub fn preorder(&'a self) -> Option<iterator::PreorderIter<'a, K, V>> {
         self.root.as_ref().map(|root| root.preorder(self.len))
     }
+
+    pub fn inorder(&'a self) -> Option<iterator::InorderIter<'a, K, V>> {
+        self.root.as_ref().map(|root| root.inorder(self.len))
+    }
 }

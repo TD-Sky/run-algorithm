@@ -65,3 +65,13 @@ fn string_string_sample() {
     map.insert("John", "约翰");
     map.insert("Peter", "彼得");
 }
+
+#[test]
+fn test_inorder() {
+    let map = u32_str_sample();
+
+    assert_eq!(
+        map.inorder().unwrap().collect::<Vec<_>>(),
+        vec![(&0, &"Marry"), (&1, &"Mike"), (&2, &"John"), (&3, &"Peter")]
+    );
+}

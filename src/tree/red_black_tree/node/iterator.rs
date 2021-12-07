@@ -29,8 +29,13 @@ where
     }
 }
 
-// 对外类型
+/* 对外的迭代器类型 */
+
 pub struct PreorderIter<'a, K, V>(vec::IntoIter<(&'a K, &'a V)>)
+where
+    K: Ord;
+
+pub struct InorderIter<'a, K, V>(vec::IntoIter<(&'a K, &'a V)>)
 where
     K: Ord;
 
@@ -52,8 +57,37 @@ where
     }
 }
 
-// 对外迭代器方法
+impl<'a, K, V> InorderIter<'a, K, V>
+where
+    K: Ord,
+{
+    pub(super) fn with_capacity(root: &'a Node<'a, K, V>, cap: usize) -> Self {
+        let mut nodes = Vec::with_capacity(cap);
+        Self::inorder(root, &mut nodes);
+        Self(nodes.into_iter())
+    }
+
+    fn inorder(node: &'a Node<'a, K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
+        node.left.as_ref().map(|child| Self::inorder(child, nodes));
+        nodes.push((&node.key, &node.value));
+        node.right.as_ref().map(|child| Self::inorder(child, nodes));
+    }
+}
+
+/* 对外迭代器方法 */
+
 impl<'a, K, V> Iterator for PreorderIter<'a, K, V>
+where
+    K: Ord,
+{
+    type Item = (&'a K, &'a V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+impl<'a, K, V> Iterator for InorderIter<'a, K, V>
 where
     K: Ord,
 {

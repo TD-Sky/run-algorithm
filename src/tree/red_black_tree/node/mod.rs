@@ -1,6 +1,6 @@
 pub mod iterator;
 
-use self::iterator::PreorderIter;
+use self::iterator::{InorderIter, PreorderIter};
 use std::cmp::Ordering;
 use std::marker::PhantomData;
 use std::mem;
@@ -300,5 +300,9 @@ where
 {
     pub(super) fn preorder(&'a self, cap: usize) -> PreorderIter<'a, K, V> {
         PreorderIter::with_capacity(self, cap)
+    }
+
+    pub(super) fn inorder(&'a self, cap: usize) -> InorderIter<'a, K, V> {
+        InorderIter::with_capacity(self, cap)
     }
 }
