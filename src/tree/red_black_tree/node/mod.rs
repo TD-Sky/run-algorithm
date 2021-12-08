@@ -292,11 +292,8 @@ where
         }
     }
 
-    pub(super) fn height_plus(&self) -> usize {
-        self.childs()
-            .map(|child| child.height_plus())
-            .fold(0, Ord::max)
-            + 1
+    pub(super) fn height(&self) -> isize {
+        self.childs().map(|child| child.height()).fold(-1, Ord::max) + 1
     }
 }
 
