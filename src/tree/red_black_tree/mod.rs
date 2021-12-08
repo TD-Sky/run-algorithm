@@ -89,8 +89,8 @@ where
         self.root.as_ref().and_then(|root| root.get(key))
     }
 
-    pub fn depth(&self) -> Option<usize> {
-        self.root.as_ref().map(|root| root.depth())
+    pub fn height(&self) -> Option<usize> {
+        self.root.as_ref().map(|root| root.height_plus() - 1)
     }
 
     pub fn preorder(&'a self) -> Option<iter::PreorderIter<'a, K, V>> {

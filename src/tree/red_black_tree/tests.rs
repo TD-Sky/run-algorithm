@@ -77,8 +77,8 @@ fn test_inorder() {
 }
 
 #[test]
-fn test_depth() {
+fn test_height() {
     let map = u32_str_sample();
 
-    assert_eq!(map.depth(), Some(3));
+    assert_eq!(map.height(), Some(2));
 }
