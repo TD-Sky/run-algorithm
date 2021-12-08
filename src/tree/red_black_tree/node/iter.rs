@@ -2,7 +2,7 @@ use super::Node;
 use std::array;
 use std::vec;
 
-struct ChildsIter<'a, K, V>(array::IntoIter<Option<&'a Box<Node<'a, K, V>>>, 2>)
+pub(super) struct ChildsIter<'a, K, V>(array::IntoIter<Option<&'a Box<Node<'a, K, V>>>, 2>)
 where
     K: Ord;
 
@@ -10,7 +10,7 @@ impl<'a, K, V> Node<'a, K, V>
 where
     K: Ord,
 {
-    fn childs(&'a self) -> ChildsIter<'a, K, V> {
+    pub(super) fn childs(&'a self) -> ChildsIter<'a, K, V> {
         ChildsIter([self.left.as_ref(), self.right.as_ref()].into_iter())
     }
 }

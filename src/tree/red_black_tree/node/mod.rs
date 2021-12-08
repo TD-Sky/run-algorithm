@@ -1,6 +1,6 @@
-pub mod iterator;
+pub mod iter;
+use self::iter::{InorderIter, PreorderIter};
 
-use self::iterator::{InorderIter, PreorderIter};
 use std::cmp::Ordering;
 use std::marker::PhantomData;
 use std::mem;
@@ -290,6 +290,10 @@ where
             Ordering::Less => self.right.as_ref().and_then(|right| right.get(key)),
             Ordering::Greater => self.left.as_ref().and_then(|left| left.get(key)),
         }
+    }
+
+    pub(super) fn depth(&self) -> usize {
+        self.childs().map(|child| child.depth()).fold(0, Ord::max) + 1
     }
 }
 

@@ -75,3 +75,10 @@ fn test_inorder() {
         vec![(&0, &"Marry"), (&1, &"Mike"), (&2, &"John"), (&3, &"Peter")]
     );
 }
+
+#[test]
+fn test_depth() {
+    let map = u32_str_sample();
+
+    assert_eq!(map.depth(), Some(3));
+}

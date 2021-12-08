@@ -3,7 +3,7 @@ mod node;
 #[cfg(test)]
 mod tests;
 
-pub use self::node::iterator;
+pub use self::node::iter;
 use self::node::{Color, Node};
 
 #[allow(dead_code)]
@@ -89,11 +89,15 @@ where
         self.root.as_ref().and_then(|root| root.get(key))
     }
 
-    pub fn preorder(&'a self) -> Option<iterator::PreorderIter<'a, K, V>> {
+    pub fn depth(&self) -> Option<usize> {
+        self.root.as_ref().map(|root| root.depth())
+    }
+
+    pub fn preorder(&'a self) -> Option<iter::PreorderIter<'a, K, V>> {
         self.root.as_ref().map(|root| root.preorder(self.len))
     }
 
-    pub fn inorder(&'a self) -> Option<iterator::InorderIter<'a, K, V>> {
+    pub fn inorder(&'a self) -> Option<iter::InorderIter<'a, K, V>> {
         self.root.as_ref().map(|root| root.inorder(self.len))
     }
 }
