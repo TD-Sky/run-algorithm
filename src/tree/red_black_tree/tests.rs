@@ -1,7 +1,7 @@
-use super::RBTMap;
+use super::RBTreeMap;
 
-fn u32_str_sample<'a>() -> RBTMap<'a, u32, &'a str> {
-    let mut map = RBTMap::new();
+fn u32_str_sample<'a>() -> RBTreeMap<'a, u32, &'a str> {
+    let mut map = RBTreeMap::new();
 
     map.insert(0, "Marry");
     map.insert(1, "Mike");
@@ -58,7 +58,7 @@ fn test_get() {
 
 #[test]
 fn string_string_sample() {
-    let mut map: RBTMap<&str, &str> = RBTMap::new();
+    let mut map: RBTreeMap<&str, &str> = RBTreeMap::new();
 
     map.insert("Marry", "玛丽");
     map.insert("Mike", "迈克");

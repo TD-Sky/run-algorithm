@@ -7,7 +7,7 @@ pub use self::node::iter;
 use self::node::{Color, Node};
 
 #[allow(dead_code)]
-pub struct RBTMap<'a, K, V>
+pub struct RBTreeMap<'a, K, V>
 where
     K: Ord,
 {
@@ -16,7 +16,7 @@ where
 }
 
 #[allow(dead_code)]
-impl<'a, K, V> RBTMap<'a, K, V>
+impl<'a, K, V> RBTreeMap<'a, K, V>
 where
     K: Ord,
 {
