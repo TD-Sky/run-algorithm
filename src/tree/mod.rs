@@ -1,3 +1,3 @@
 mod red_black_tree;
 
-pub use red_black_tree::RBTMap;
+pub use red_black_tree::RBTreeMap;
