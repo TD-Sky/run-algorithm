@@ -1,6 +1,6 @@
 use super::RBTreeMap;
 
-fn u32_str_sample<'a>() -> RBTreeMap<'a, u32, &'a str> {
+fn u32_str_sample<'a>() -> RBTreeMap<u32, &'a str> {
     let mut map = RBTreeMap::new();
 
     map.insert(0, "Marry");

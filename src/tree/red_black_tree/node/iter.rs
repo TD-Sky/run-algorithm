@@ -2,15 +2,16 @@ use super::Node;
 use std::array;
 use std::vec;
 
-pub(super) struct ChildsIter<'a, K, V>(array::IntoIter<Option<&'a Box<Node<'a, K, V>>>, 2>)
+pub(super) struct ChildsIter<'a, K, V>(array::IntoIter<Option<&'a Box<Node<K, V>>>, 2>)
 where
     K: Ord;
 
-impl<'a, K, V> Node<'a, K, V>
+// 遍历非空子节点的方法
+impl<K, V> Node<K, V>
 where
     K: Ord,
 {
-    pub(super) fn childs(&'a self) -> ChildsIter<'a, K, V> {
+    pub(super) fn childs(&self) -> ChildsIter<'_, K, V> {
         ChildsIter([self.left.as_ref(), self.right.as_ref()].into_iter())
     }
 }
@@ -19,7 +20,7 @@ impl<'a, K, V> Iterator for ChildsIter<'a, K, V>
 where
     K: Ord,
 {
-    type Item = &'a Node<'a, K, V>;
+    type Item = &'a Node<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().and_then(|opt_node| match opt_node {
@@ -43,13 +44,13 @@ impl<'a, K, V> PreorderIter<'a, K, V>
 where
     K: Ord,
 {
-    pub(super) fn with_capacity(root: &'a Node<'a, K, V>, cap: usize) -> Self {
+    pub(super) fn with_capacity(root: &'a Node<K, V>, cap: usize) -> Self {
         let mut nodes = Vec::with_capacity(cap);
         Self::preorder(root, &mut nodes);
         Self(nodes.into_iter())
     }
 
-    fn preorder(node: &'a Node<'a, K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
+    fn preorder(node: &'a Node<K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
         nodes.push((&node.key, &node.value));
         for child in node.childs() {
             Self::preorder(child, nodes);
@@ -61,13 +62,13 @@ impl<'a, K, V> InorderIter<'a, K, V>
 where
     K: Ord,
 {
-    pub(super) fn with_capacity(root: &'a Node<'a, K, V>, cap: usize) -> Self {
+    pub(super) fn with_capacity(root: &'a Node<K, V>, cap: usize) -> Self {
         let mut nodes = Vec::with_capacity(cap);
         Self::inorder(root, &mut nodes);
         Self(nodes.into_iter())
     }
 
-    fn inorder(node: &'a Node<'a, K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
+    fn inorder(node: &'a Node<K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
         node.left.as_ref().map(|child| Self::inorder(child, nodes));
         nodes.push((&node.key, &node.value));
         node.right.as_ref().map(|child| Self::inorder(child, nodes));

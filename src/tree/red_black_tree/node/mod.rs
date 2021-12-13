@@ -2,7 +2,6 @@ pub mod iter;
 use self::iter::{InorderIter, PreorderIter};
 
 use std::cmp::Ordering;
-use std::marker::PhantomData;
 use std::mem;
 
 pub(super) enum Color {
@@ -10,13 +9,12 @@ pub(super) enum Color {
     Black,
 }
 
-pub(super) struct Node<'a, K: Ord, V> {
+pub(super) struct Node<K: Ord, V> {
     color: Color,
-    key: K,
-    value: V,
-    left: Option<Box<Node<'a, K, V>>>,
-    right: Option<Box<Node<'a, K, V>>>,
-    marker: PhantomData<&'a V>,
+    pub(super) key: K,
+    pub(super) value: V,
+    left: Option<Box<Self>>,
+    right: Option<Box<Self>>,
 }
 
 impl Color {
@@ -39,13 +37,13 @@ impl Color {
     }
 }
 
-impl<'a, K, V> Node<'a, K, V>
+impl<K, V> Node<K, V>
 where
     K: Ord,
 {
     /* 链接颜色判定方法 */
 
-    fn is_red(opt_node: &Option<Box<Node<'a, K, V>>>) -> bool {
+    fn is_red(opt_node: &Option<Box<Self>>) -> bool {
         // 空链接视为黑
         opt_node.as_ref().map_or(false, |node| node.color.is_red())
     }
@@ -165,7 +163,7 @@ where
     }
 }
 
-impl<'a, K, V> Node<'a, K, V>
+impl<K, V> Node<K, V>
 where
     K: Ord,
 {
@@ -176,7 +174,6 @@ where
             value,
             left: None,
             right: None,
-            marker: PhantomData,
         }
     }
 
@@ -284,11 +281,11 @@ where
         }
     }
 
-    pub(super) fn get(&self, key: &K) -> Option<&V> {
+    pub(super) fn get_node(&self, key: &K) -> Option<&Self> {
         match self.key.cmp(key) {
-            Ordering::Equal => Some(&self.value),
-            Ordering::Less => self.right.as_ref().and_then(|right| right.get(key)),
-            Ordering::Greater => self.left.as_ref().and_then(|left| left.get(key)),
+            Ordering::Equal => Some(self),
+            Ordering::Less => self.right.as_ref().and_then(|right| right.get_node(key)),
+            Ordering::Greater => self.left.as_ref().and_then(|left| left.get_node(key)),
         }
     }
 
@@ -298,15 +295,15 @@ where
 }
 
 // 迭代器方法
-impl<'a, K, V> Node<'a, K, V>
+impl<K, V> Node<K, V>
 where
     K: Ord,
 {
-    pub(super) fn preorder(&'a self, cap: usize) -> PreorderIter<'a, K, V> {
+    pub(super) fn preorder(&self, cap: usize) -> PreorderIter<'_, K, V> {
         PreorderIter::with_capacity(self, cap)
     }
 
-    pub(super) fn inorder(&'a self, cap: usize) -> InorderIter<'a, K, V> {
+    pub(super) fn inorder(&self, cap: usize) -> InorderIter<'_, K, V> {
         InorderIter::with_capacity(self, cap)
     }
 }
