@@ -299,11 +299,11 @@ impl<K, V> Node<K, V>
 where
     K: Ord,
 {
-    pub(super) fn preorder(&self, cap: usize) -> PreorderIter<'_, K, V> {
-        PreorderIter::with_capacity(self, cap)
+    pub(super) fn preorder(&self) -> PreorderIter<'_, K, V> {
+        PreorderIter::new(self)
     }
 
-    pub(super) fn inorder(&self, cap: usize) -> InorderIter<'_, K, V> {
-        InorderIter::with_capacity(self, cap)
+    pub(super) fn inorder(&self) -> InorderIter<'_, K, V> {
+        InorderIter::new(self)
     }
 }

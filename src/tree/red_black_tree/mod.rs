@@ -96,10 +96,10 @@ where
     }
 
     pub fn preorder(&self) -> Option<iter::PreorderIter<'_, K, V>> {
-        self.root.as_ref().map(|root| root.preorder(self.len))
+        self.root.as_ref().map(|root| root.preorder())
     }
 
     pub fn inorder(&self) -> Option<iter::InorderIter<'_, K, V>> {
-        self.root.as_ref().map(|root| root.inorder(self.len))
+        self.root.as_ref().map(|root| root.inorder())
     }
 }

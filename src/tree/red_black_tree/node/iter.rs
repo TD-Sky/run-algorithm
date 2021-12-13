@@ -2,9 +2,12 @@ use super::Node;
 use std::array;
 use std::vec;
 
-pub(super) struct ChildsIter<'a, K, V>(array::IntoIter<Option<&'a Box<Node<K, V>>>, 2>)
+pub(super) struct ChildsIter<'a, K, V>
 where
-    K: Ord;
+    K: Ord,
+{
+    inner: array::IntoIter<Option<&'a Box<Node<K, V>>>, 2>,
+}
 
 // 遍历非空子节点的方法
 impl<K, V> Node<K, V>
@@ -12,7 +15,9 @@ where
     K: Ord,
 {
     pub(super) fn childs(&self) -> ChildsIter<'_, K, V> {
-        ChildsIter([self.left.as_ref(), self.right.as_ref()].into_iter())
+        ChildsIter {
+            inner: [self.left.as_ref(), self.right.as_ref()].into_iter(),
+        }
     }
 }
 
@@ -23,7 +28,7 @@ where
     type Item = &'a Node<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().and_then(|opt_node| match opt_node {
+        self.inner.next().and_then(|opt_node| match opt_node {
             None => self.next(),
             Some(node) => Some(node.as_ref()),
         })
@@ -32,22 +37,26 @@ where
 
 /* 对外的迭代器类型 */
 
-pub struct PreorderIter<'a, K, V>(vec::IntoIter<(&'a K, &'a V)>)
+// 前序遍历迭代器
+pub struct PreorderIter<'a, K, V>
 where
-    K: Ord;
-
-pub struct InorderIter<'a, K, V>(vec::IntoIter<(&'a K, &'a V)>)
-where
-    K: Ord;
+    K: Ord,
+{
+    inner: vec::IntoIter<(&'a K, &'a V)>,
+}
 
 impl<'a, K, V> PreorderIter<'a, K, V>
 where
     K: Ord,
 {
-    pub(super) fn with_capacity(root: &'a Node<K, V>, cap: usize) -> Self {
-        let mut nodes = Vec::with_capacity(cap);
+    pub(super) fn new(root: &'a Node<K, V>) -> Self {
+        let mut nodes = Vec::new();
+
         Self::preorder(root, &mut nodes);
-        Self(nodes.into_iter())
+
+        Self {
+            inner: nodes.into_iter(),
+        }
     }
 
     fn preorder(node: &'a Node<K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
@@ -58,14 +67,26 @@ where
     }
 }
 
+// 中序遍历迭代器
+pub struct InorderIter<'a, K, V>
+where
+    K: Ord,
+{
+    inner: vec::IntoIter<(&'a K, &'a V)>,
+}
+
 impl<'a, K, V> InorderIter<'a, K, V>
 where
     K: Ord,
 {
-    pub(super) fn with_capacity(root: &'a Node<K, V>, cap: usize) -> Self {
-        let mut nodes = Vec::with_capacity(cap);
+    pub(super) fn new(root: &'a Node<K, V>) -> Self {
+        let mut nodes = Vec::new();
+
         Self::inorder(root, &mut nodes);
-        Self(nodes.into_iter())
+
+        Self {
+            inner: nodes.into_iter(),
+        }
     }
 
     fn inorder(node: &'a Node<K, V>, nodes: &mut Vec<(&'a K, &'a V)>) {
@@ -84,7 +105,7 @@ where
     type Item = (&'a K, &'a V);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
+        self.inner.next()
     }
 }
 
@@ -95,6 +116,6 @@ where
     type Item = (&'a K, &'a V);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
+        self.inner.next()
     }
 }
