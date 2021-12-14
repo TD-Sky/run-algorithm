@@ -1,3 +1,11 @@
+macro_rules! get_then_inc {
+    ($num: ident) => {{
+        let past = $num;
+        $num += 1;
+        past
+    }};
+}
+
 #[allow(dead_code)]
 pub enum Order {
     TB,
@@ -47,21 +55,15 @@ where
         // right 或 left 的自增代表消耗子数组
         for i in low..=high {
             self.arr[i] = if left > mid {
-                self.aux[Self::get_then_inc(&mut right)]
+                self.aux[get_then_inc!(right)]
             } else if right > high {
-                self.aux[Self::get_then_inc(&mut left)]
+                self.aux[get_then_inc!(left)]
             } else if self.aux[left] > self.aux[right] {
-                self.aux[Self::get_then_inc(&mut right)]
+                self.aux[get_then_inc!(right)]
             } else {
-                self.aux[Self::get_then_inc(&mut left)]
+                self.aux[get_then_inc!(left)]
             };
         }
-    }
-
-    fn get_then_inc(n: &mut usize) -> usize {
-        let res = *n;
-        *n += 1;
-        res
     }
 }
 
