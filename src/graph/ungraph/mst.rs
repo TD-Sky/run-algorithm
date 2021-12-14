@@ -9,28 +9,28 @@ use std::rc::{Rc, Weak};
 type GhostEdge = Option<Weak<Edge>>;
 
 pub(super) struct LazyPrimMST<'a, V = ()> {
-    graph: &'a UnGraph<'a, V>,
+    graph: &'a UnGraph<V>,
     marked: HashSet<u32>,
     ms_tree: Vec<Weak<Edge>>,
     edge_pq: PriorityQueue<Rc<Edge>, Reverse<i32>>,
 }
 
 pub(super) struct PrimMST<'a, V = ()> {
-    graph: &'a UnGraph<'a, V>,
+    graph: &'a UnGraph<V>,
     marked: HashSet<u32>,
     edge_to: HashMap<u32, GhostEdge>,
     vert_pq: PriorityQueue<u32, Reverse<i32>>,
 }
 
-pub(super) struct KruskalMST<'a, V = ()> {
+pub(super) struct KruskalMST<V = ()> {
     ms_tree: Vec<Weak<Edge>>,
     edge_pq: PriorityQueue<Rc<Edge>, Reverse<i32>>,
     uf: UF,
-    marker: PhantomData<&'a V>,
+    marker: PhantomData<V>,
 }
 
 impl<'a, V> LazyPrimMST<'a, V> {
-    pub(super) fn new(graph: &'a UnGraph<'a, V>) -> Self {
+    pub(super) fn new(graph: &'a UnGraph<V>) -> Self {
         Self {
             graph,
             marked: HashSet::with_capacity(graph.vs()),
@@ -76,7 +76,7 @@ impl<'a, V> LazyPrimMST<'a, V> {
 }
 
 impl<'a, V> PrimMST<'a, V> {
-    pub(super) fn new(graph: &'a UnGraph<'a, V>) -> Self {
+    pub(super) fn new(graph: &'a UnGraph<V>) -> Self {
         let mut edge_to = HashMap::with_capacity(graph.vs() - 1);
         // 标记所有边的权重为无穷大
         for vid in graph.vids() {
@@ -132,8 +132,8 @@ impl<'a, V> PrimMST<'a, V> {
     }
 }
 
-impl<'a, V> KruskalMST<'a, V> {
-    pub(super) fn new(graph: &'a UnGraph<'a, V>) -> Self {
+impl<V> KruskalMST<V> {
+    pub(super) fn new(graph: &UnGraph<V>) -> Self {
         let mut edge_pq = PriorityQueue::new();
         // 准备逐条取出权重最小边
         for edge in graph.edges() {
@@ -153,7 +153,7 @@ impl<'a, V> KruskalMST<'a, V> {
         // 不断抽取图的边，直到树完整为止
         loop {
             match self.edge_pq.pop() {
-                Some((edge, _)) if self.tree_incplt() => {
+                Some((edge, _)) if self.incomplete() => {
                     let vids = edge.end_points();
 
                     // 并查集就是在建树
@@ -169,7 +169,8 @@ impl<'a, V> KruskalMST<'a, V> {
         }
     }
 
-    fn tree_incplt(&self) -> bool {
+    // 检查树是否未生成完毕
+    fn incomplete(&self) -> bool {
         self.ms_tree.len() < self.ms_tree.capacity()
     }
 }

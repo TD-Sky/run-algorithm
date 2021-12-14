@@ -1,14 +1,16 @@
-use super::VertNotInGraph;
+use super::NodeNotInGraph;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::marker::PhantomData;
+
+#[cfg(test)]
+mod tests;
 
 #[allow(dead_code)]
-struct Vertex<V = ()> {
+struct Node<V = ()> {
     element: V,
     neighbours: Vec<u32>,
 }
 
-impl<V> Vertex<V> {
+impl<V> Node<V> {
     fn new(elt: V) -> Self {
         Self {
             element: elt,
@@ -18,21 +20,20 @@ impl<V> Vertex<V> {
 }
 
 #[allow(dead_code)]
-pub struct DiGraph<'a, V = ()> {
-    adj_table: HashMap<u32, Vertex<V>>,
-    marker: PhantomData<&'a V>,
+pub struct DiGraph<V = ()> {
+    adj_table: HashMap<u32, Node<V>>,
 }
 
 #[allow(dead_code)]
-impl<'a, V> DiGraph<'a, V> {
-    fn add_vert(&mut self, vid: u32, vert: V) {
-        self.adj_table.entry(vid).or_insert(Vertex::new(vert));
+impl<V> DiGraph<V> {
+    fn add_node(&mut self, vid: u32, node: V) {
+        self.adj_table.entry(vid).or_insert(Node::new(node));
     }
 
-    fn neighbours(&'a self, vid: u32) -> Result<&'a Vec<u32>, VertNotInGraph> {
+    fn neighbours(&self, vid: u32) -> Result<&Vec<u32>, NodeNotInGraph> {
         match self.adj_table.get(&vid) {
-            Some(vert) => Ok(&vert.neighbours),
-            None => Err(VertNotInGraph(vid)),
+            Some(node) => Ok(&node.neighbours),
+            None => Err(NodeNotInGraph(vid)),
         }
     }
 
@@ -57,24 +58,23 @@ impl<'a, V> DiGraph<'a, V> {
 }
 
 #[allow(dead_code)]
-impl<'a, V> DiGraph<'a, V> {
+impl<V> DiGraph<V> {
     pub fn new() -> Self {
         Self {
             adj_table: HashMap::new(),
-            marker: PhantomData,
         }
     }
 
     pub fn add_edge(&mut self, edge: (u32, u32), start: V, end: V) {
-        self.add_vert(edge.0, start);
-        self.add_vert(edge.1, end);
+        self.add_node(edge.0, start);
+        self.add_node(edge.1, end);
 
-        self.adj_table.entry(edge.0).and_modify(|vert| {
-            vert.neighbours.push(edge.1);
+        self.adj_table.entry(edge.0).and_modify(|node| {
+            node.neighbours.push(edge.1);
         });
     }
 
-    pub fn contains_vert(&self, vid: u32) -> bool {
+    pub fn contains_node(&self, vid: u32) -> bool {
         self.adj_table.contains_key(&vid)
     }
 
@@ -92,7 +92,7 @@ impl<'a, V> DiGraph<'a, V> {
         self.adj_table.len()
     }
 
-    pub fn shortest_path(&'a self, src: u32, dest: u32) -> Option<VecDeque<u32>>
+    pub fn shortest_path(&self, src: u32, dest: u32) -> Option<VecDeque<u32>>
     where
         Self: Sized,
     {
@@ -111,23 +111,5 @@ impl<'a, V> DiGraph<'a, V> {
             path.push_front(src);
             path
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::DiGraph;
-    #[test]
-    fn dfs() {
-        let mut digraph: DiGraph<()> = DiGraph::new();
-        digraph.add_edge((0, 2), (), ());
-        digraph.add_edge((0, 1), (), ());
-        digraph.add_edge((0, 5), (), ());
-        digraph.add_edge((3, 5), (), ());
-        digraph.add_edge((3, 4), (), ());
-        digraph.add_edge((2, 4), (), ());
-        digraph.add_edge((2, 1), (), ());
-        digraph.add_edge((2, 3), (), ());
-        digraph.shortest_path(0, 5).unwrap(); // [0, 5]
     }
 }

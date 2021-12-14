@@ -4,9 +4,9 @@ mod ungraph;
 use std::fmt;
 
 #[derive(Debug)]
-pub struct VertNotInGraph(u32);
+pub struct NodeNotInGraph(u32);
 
-impl fmt::Display for VertNotInGraph {
+impl fmt::Display for NodeNotInGraph {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "vertex {} is not in the graph", self.0)
     }

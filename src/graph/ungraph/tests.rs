@@ -2,8 +2,8 @@ use super::{Edge, UnGraph};
 use std::io::{self, Write};
 use std::rc::Weak;
 
-fn sample_graph<'a>() -> UnGraph<'a, ()> {
-    let mut graph: UnGraph<'a, ()> = UnGraph::new();
+fn sample_graph() -> UnGraph<()> {
+    let mut graph: UnGraph<()> = UnGraph::new();
     graph.add_edge((4, 5, 35), (), ());
     graph.add_edge((4, 7, 37), (), ());
     graph.add_edge((5, 7, 28), (), ());
