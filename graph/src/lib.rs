@@ -14,5 +14,5 @@ impl fmt::Display for NodeNotInGraph {
     }
 }
 
-pub use digraph::DiGraph;
-pub use ungraph::UnGraph;
+pub use self::digraph::DiGraph;
+pub use self::ungraph::UnGraph;
