@@ -22,18 +22,6 @@ fn test_insert() {
 }
 
 #[test]
-fn test_pop_min() {
-    let mut map = u32_str_sample();
-
-    assert_eq!(map.pop_min(), Some("Marry"));
-    assert_eq!(map.pop_min(), Some("Mike"));
-    assert_eq!(map.pop_min(), Some("John"));
-    assert_eq!(map.pop_min(), Some("Peter"));
-    assert_eq!(map.pop_min(), None);
-    assert_eq!(map.len(), 0);
-}
-
-#[test]
 fn test_remove() {
     let mut map = u32_str_sample();
 

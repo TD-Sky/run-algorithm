@@ -9,12 +9,14 @@ pub(super) enum Color {
     Black,
 }
 
+pub(super) type NodePtr<K, V> = Option<Box<Node<K, V>>>;
+
 pub(super) struct Node<K: Ord, V> {
     color: Color,
     pub(super) key: K,
     pub(super) value: V,
-    left: Option<Box<Self>>,
-    right: Option<Box<Self>>,
+    left: NodePtr<K, V>,
+    right: NodePtr<K, V>,
 }
 
 impl Color {
@@ -27,8 +29,8 @@ impl Color {
 
     fn rev(&mut self) {
         match self {
-            Color::Red => mem::replace(self, Color::Black),
-            Color::Black => mem::replace(self, Color::Red),
+            Color::Red => *self = Color::Black,
+            Color::Black => *self = Color::Red,
         };
     }
 
@@ -43,33 +45,31 @@ where
 {
     /* 链接颜色判定方法 */
 
-    fn is_red(opt_node: &Option<Box<Self>>) -> bool {
+    fn is_red(opt_node: &NodePtr<K, V>) -> bool {
         // 空链接视为黑
         opt_node.as_ref().map_or(false, |node| node.color.is_red())
     }
 
-    fn has_red_right(&self) -> bool {
+    fn red_right(&self) -> bool {
         Self::is_red(&self.right)
     }
 
-    fn has_red_left(&self) -> bool {
+    fn red_left(&self) -> bool {
         Self::is_red(&self.left)
     }
 
-    fn has_red_double_left(&self) -> bool {
+    fn red_double_left(&self) -> bool {
         self.left
             .as_ref()
-            .map_or(false, |left| left.color.is_red() && left.has_red_left())
+            .map_or(false, |left| left.color.is_red() && left.red_left())
     }
 
-    fn has_red_right_left(&self) -> bool {
-        self.right
-            .as_ref()
-            .map_or(false, |right| right.has_red_left())
+    fn red_right_left(&self) -> bool {
+        self.right.as_ref().map_or(false, |right| right.red_left())
     }
 
-    fn has_red_left_left(&self) -> bool {
-        self.left.as_ref().map_or(false, |left| left.has_red_left())
+    fn red_left_left(&self) -> bool {
+        self.left.as_ref().map_or(false, |left| left.red_left())
     }
 
     /* 局部变换 */
@@ -112,7 +112,7 @@ where
         // 向下的树是完好的，故只可能存在红色左链接，
         // 若是如此，重构后节点会发生粘连，
         // 在2-3-4树中表现为上溢。
-        if self.has_red_right_left() {
+        if self.red_right_left() {
             self.right.as_mut().unwrap().rot_right();
             self.rot_left();
             // 消除粘连
@@ -123,7 +123,7 @@ where
     fn restruct_right(&mut self) {
         self.flip_color();
 
-        if self.has_red_left_left() {
+        if self.red_left_left() {
             self.rot_right();
             self.flip_color();
         }
@@ -132,15 +132,15 @@ where
     fn rebalance(&mut self) {
         // 其实直接判定右红也可以
         // 但这会转换成双左情况
-        if self.has_red_right() && !self.has_red_left() {
+        if self.red_right() && !self.red_left() {
             self.rot_left();
         }
 
-        if self.has_red_double_left() {
+        if self.red_double_left() {
             self.rot_right();
         }
 
-        if self.has_red_left() && self.has_red_right() {
+        if self.red_left() && self.red_right() {
             self.flip_color();
         }
     }
@@ -212,73 +212,66 @@ where
         res
     }
 
-    pub(super) fn pop_min_node(opt_node: *mut Option<Box<Self>>) -> Box<Self> {
+    pub(super) fn pop_min_node(opt_node: *mut NodePtr<K, V>) -> Box<Self> {
         // 删除节点不能破坏树的平衡，因此只要删除红节点即可。
         // 为了保证总是删除红节点，我们先进行局部重构，令
         // 当前节点 或 当前节点之左 为红。
-        unsafe {
-            (&mut *opt_node)
-                .as_mut()
-                .and_then(|node| {
-                    let opt_left: *mut Option<Box<Self>> = &mut node.left;
+        let node = unsafe { (&mut *opt_node).as_mut().unwrap() };
+        let opt_left: *mut NodePtr<K, V> = &mut node.left;
 
-                    match &mut *opt_left {
-                        None => (&mut *opt_node).take(),
-                        Some(left) => {
-                            // 捏红节点
-                            // 若节点的左和左之左都为黑，
-                            // 则借取节点以拼接，使子节点形成3/4-节点。
-                            // 若左之左为红，说明仍有更小的节点存在，可以直接往下；
-                            // 同时，这也说明左键在一个3-节点内，无需再借用拼接。
-                            if !(node.has_red_left() || left.has_red_left()) {
-                                // 2-3-4树左旋式局部重整
-                                node.restruct_left();
-                            }
+        // 从指针调出左子节点的引用不违反容斥法则
+        match unsafe { &mut *opt_left } {
+            None => unsafe { (&mut *opt_node).take().unwrap() },
+            Some(left) => {
+                // 捏红节点
+                // 若节点的左和左之左都为黑，
+                // 则借取节点以拼接，使子节点形成3/4-节点。
+                // 若左之左为红，说明仍有更小的节点存在，可以直接往下；
+                // 同时，这也说明左键在一个3-节点内，无需再借用拼接。
+                if !(node.red_left() || left.red_left()) {
+                    // 2-3-4树左旋式局部重整
+                    node.restruct_left();
+                }
 
-                            let min_node = Self::pop_min_node(opt_left);
+                let min_node = Self::pop_min_node(opt_left);
 
-                            node.rebalance();
+                node.rebalance();
 
-                            Some(min_node)
-                        }
-                    }
-                })
-                .unwrap()
+                min_node
+            }
         }
     }
 
-    pub(super) fn remove_node(opt_node: *mut Option<Box<Self>>, key: &K) -> Option<Box<Self>> {
-        unsafe {
-            (&mut *opt_node).as_mut().and_then(|node| {
-                let removal = if *key < node.key {
-                    if !(node.has_red_left() || node.has_red_left_left()) {
-                        node.restruct_left();
-                    }
-                    Self::remove_node(&mut node.left, key)
+    pub(super) fn remove_node(opt_node: *mut NodePtr<K, V>, key: &K) -> NodePtr<K, V> {
+        unsafe { &mut *opt_node }.as_mut().and_then(|node| {
+            let removal = if *key < node.key {
+                if !(node.red_left() || node.red_left_left()) {
+                    node.restruct_left();
+                }
+                Self::remove_node(&mut node.left, key)
+            } else {
+                if node.red_left() {
+                    node.rot_right();
+                }
+
+                if *key == node.key && node.right.is_none() {
+                    return unsafe { (&mut *opt_node).take() };
+                }
+
+                if !(node.red_right() || node.red_right_left()) {
+                    node.restruct_right();
+                }
+
+                if *key == node.key {
+                    node.swap_successor();
+                    Some(Self::pop_min_node(&mut node.right))
                 } else {
-                    if node.has_red_left() {
-                        node.rot_right();
-                    }
-
-                    if *key == node.key && node.right.is_none() {
-                        return (&mut *opt_node).take();
-                    }
-
-                    if !(node.has_red_right() || node.has_red_right_left()) {
-                        node.restruct_right();
-                    }
-
-                    if *key == node.key {
-                        node.swap_successor();
-                        Some(Self::pop_min_node(&mut node.right))
-                    } else {
-                        Self::remove_node(&mut node.right, key)
-                    }
-                };
-                node.rebalance();
-                removal
-            })
-        }
+                    Self::remove_node(&mut node.right, key)
+                }
+            };
+            node.rebalance();
+            removal
+        })
     }
 
     pub(super) fn get_node(&self, key: &K) -> Option<&Self> {

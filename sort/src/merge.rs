@@ -12,14 +12,16 @@ pub enum Order {
     BT,
 }
 
-pub struct MergeSort<'a, T: Ord + Copy + Default> {
+pub use Order::{BT, TB};
+
+pub struct MergeSort<'a, T: Ord + Clone> {
     aux: Vec<T>,
     arr: &'a mut [T],
 }
 
 impl<'a, T> MergeSort<'a, T>
 where
-    T: Ord + Copy + Default,
+    T: Ord + Clone,
 {
     fn sort_bottom_to_top(&mut self) {
         let len = self.arr.len();
@@ -46,22 +48,17 @@ where
         let mut left = low;
         let mut right = mid + 1;
 
-        // 先准备好辅助数组，
-        for i in low..=high {
-            self.aux[i] = self.arr[i];
-        }
-        // 下面把辅助数组的元素有序放回原数组
-
+        // 把辅助数组的元素有序放回原数组
         // right 或 left 的自增代表消耗子数组
         for i in low..=high {
             self.arr[i] = if left > mid {
-                self.aux[get_then_inc!(right)]
+                self.aux[get_then_inc!(right)].clone()
             } else if right > high {
-                self.aux[get_then_inc!(left)]
+                self.aux[get_then_inc!(left)].clone()
             } else if self.aux[left] > self.aux[right] {
-                self.aux[get_then_inc!(right)]
+                self.aux[get_then_inc!(right)].clone()
             } else {
-                self.aux[get_then_inc!(left)]
+                self.aux[get_then_inc!(left)].clone()
             };
         }
     }
@@ -70,19 +67,19 @@ where
 #[allow(dead_code)]
 impl<'a, T> MergeSort<'a, T>
 where
-    T: Ord + Copy + Default,
+    T: Ord + Clone,
 {
     pub fn new(arr: &'a mut [T]) -> Self {
         let mut aux = Vec::with_capacity(arr.len());
-        aux.resize_with(arr.len(), T::default);
+        aux.clone_from_slice(arr);
 
         Self { aux, arr }
     }
 
     pub fn run(mut self, order: Order) {
         match order {
-            Order::TB => self.sort_top_to_bottom(0, self.arr.len() - 1),
-            Order::BT => self.sort_bottom_to_top(),
+            TB => self.sort_top_to_bottom(0, self.arr.len() - 1),
+            BT => self.sort_bottom_to_top(),
         };
     }
 }
@@ -94,20 +91,20 @@ mod tests {
     #[test]
     fn test_bt() {
         let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
-        MergeSort::new(&mut arr).run(super::Order::BT);
+        MergeSort::new(&mut arr).run(super::BT);
         assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
     }
 
     #[test]
     fn test_empty() {
         let mut arr: [u32; 0] = [];
-        MergeSort::new(&mut arr).run(super::Order::BT);
+        MergeSort::new(&mut arr).run(super::BT);
     }
 
     #[test]
     fn test_tb() {
         let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
-        MergeSort::new(&mut arr).run(super::Order::TB);
+        MergeSort::new(&mut arr).run(super::TB);
         assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
     }
 }

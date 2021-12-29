@@ -4,14 +4,14 @@ mod node;
 mod tests;
 
 pub use self::node::iter;
-use self::node::{Color, Node};
+use self::node::{Color, Node, NodePtr};
 
 #[allow(dead_code)]
 pub struct RBTreeMap<K, V>
 where
     K: Ord,
 {
-    root: Option<Box<Node<K, V>>>,
+    root: NodePtr<K, V>,
     len: usize,
 }
 
@@ -50,31 +50,15 @@ where
         }
     }
 
-    pub fn pop_min(&mut self) -> Option<V> {
-        if self.root.is_none() {
-            None
-        } else {
-            self.len -= 1;
-
-            let opt_node: *mut Option<Box<Node<K, V>>> = &mut self.root;
-
-            // 虽然刚传入的树根节点一定是黑色的，但是旋转总会使其链接染红，
-            // 代码上可以跳过
-            let min_node: Box<Node<K, V>> = Node::pop_min_node(opt_node);
-
-            self.root.as_mut().map(|root| root.blacken());
-
-            Some(Node::into_value(min_node))
-        }
-    }
-
     pub fn remove(&mut self, key: &K) -> Option<V> {
         if self.root.is_none() {
             None
         } else {
-            let opt_node: *mut Option<Box<Node<K, V>>> = &mut self.root;
+            let opt_node: *mut NodePtr<K, V> = &mut self.root;
 
-            let removal: Option<Box<Node<K, V>>> = Node::remove_node(opt_node, key);
+            // 虽然刚传入的树根节点一定是黑色的，但是旋转总会使其链接染红，
+            // 代码上可以跳过
+            let removal: NodePtr<K, V> = Node::remove_node(opt_node, key);
 
             self.root.as_mut().map(|root| root.blacken());
 
