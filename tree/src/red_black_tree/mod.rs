@@ -3,19 +3,29 @@ mod node;
 #[cfg(test)]
 mod tests;
 
-pub use self::node::iter;
 use self::node::{Color, Node, NodePtr};
+use std::{borrow::Borrow, ptr::NonNull};
 
-#[allow(dead_code)]
-pub struct RBTreeMap<K, V>
-where
-    K: Ord,
-{
+pub struct RBTreeMap<K, V> {
     root: NodePtr<K, V>,
     len: usize,
 }
 
-#[allow(dead_code)]
+impl<K, V> Drop for RBTreeMap<K, V> {
+    fn drop(&mut self) {
+        // 后序遍历销毁树
+        unsafe fn postorder<K, V>(mut node: NonNull<Node<K, V>>) {
+            for child in node.as_mut().children() {
+                postorder(child);
+            }
+
+            Box::from_raw(node.as_ptr());
+        }
+
+        self.root.take().map(|tree| unsafe { postorder(tree) });
+    }
+}
+
 impl<K, V> RBTreeMap<K, V>
 where
     K: Ord,
@@ -31,18 +41,20 @@ where
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         self.len += 1;
 
-        match self.root.as_mut() {
+        match self.root {
             None => {
-                self.root = Some(Box::new(Node::new(key, value, Color::Black)));
+                self.root = Some(Box::leak(Node::new(key, value, Color::Black)).into());
                 None
             }
 
-            Some(root) => {
-                let res = root.insert(key, value);
+            Some(mut root) => {
+                let old = unsafe { root.as_mut().insert(key, value) };
 
-                root.blacken();
+                unsafe {
+                    root.as_mut().blacken();
+                }
 
-                res.map(|val| {
+                old.map(|val| {
                     self.len -= 1;
                     val
                 })
@@ -50,40 +62,29 @@ where
         }
     }
 
-    pub fn remove(&mut self, key: &K) -> Option<V> {
-        if self.root.is_none() {
-            None
-        } else {
-            let opt_node: *mut NodePtr<K, V> = &mut self.root;
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
+    where
+        Q: ?Sized + Ord,
+        K: Borrow<Q>,
+    {
+        self.root.and_then(|_| {
+            let removal = Node::remove_node(&mut self.root, key);
 
-            // 虽然刚传入的树根节点一定是黑色的，但是旋转总会使其链接染红，
-            // 代码上可以跳过
-            let removal: NodePtr<K, V> = Node::remove_node(opt_node, key);
+            self.root.map(|mut root| unsafe { root.as_mut().blacken() });
 
-            self.root.as_mut().map(|root| root.blacken());
-
-            removal.map(|node| {
+            removal.map(|res| {
                 self.len -= 1;
-                Node::into_value(node)
+                Node::into_value(res)
             })
-        }
+        })
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
+    where
+        Q: ?Sized + Ord,
+        K: Borrow<Q>,
+    {
         self.root
-            .as_ref()
-            .and_then(|root| root.get_node(key).map(|node| &node.value))
-    }
-
-    pub fn height(&self) -> Option<isize> {
-        self.root.as_ref().map(|root| root.height())
-    }
-
-    pub fn preorder(&self) -> Option<iter::PreorderIter<'_, K, V>> {
-        self.root.as_ref().map(|root| root.preorder())
-    }
-
-    pub fn inorder(&self) -> Option<iter::InorderIter<'_, K, V>> {
-        self.root.as_ref().map(|root| root.inorder())
+            .and_then(|root| unsafe { root.as_ref().get_node(key).map(|node| &node.value) })
     }
 }
