@@ -36,3 +36,6 @@ Algorithms implemented in Rust. Only used for practice.
 ## Tree
 - [x] [Red Black Tree](./tree/src/red_black_tree)
 - [x] [AVL Tree](./tree/src/avl_tree)
+
+## Number Theory
+- [x] [Monotonic](./number_theory/src/monotonic.rs)

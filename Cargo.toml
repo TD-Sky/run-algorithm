@@ -7,4 +7,5 @@ members = [
   "tree",
   "union_find",
   "sort",
+  "number_theory",
 ]
