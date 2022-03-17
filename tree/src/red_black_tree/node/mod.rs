@@ -51,7 +51,7 @@ impl<K, V> Node<K, V> {
     /* 链接颜色判定方法 */
 
     fn is_red(opt_node: NodePtr<K, V>) -> bool {
-        opt_node.map_or(false, |node| unsafe { (*node.as_ptr()).color.is_red() })
+        opt_node.map_or(false, |node| unsafe { node.as_ref().color.is_red() })
     }
 
     fn red_right(&self) -> bool {
@@ -64,7 +64,7 @@ impl<K, V> Node<K, V> {
 
     fn red_double_left(&self) -> bool {
         self.left.map_or(false, |left| unsafe {
-            (*left.as_ptr()).color.is_red() && left.as_ref().red_left()
+            left.as_ref().color.is_red() && left.as_ref().red_left()
         })
     }
 
@@ -82,43 +82,43 @@ impl<K, V> Node<K, V> {
 
     unsafe fn rot_left(&mut self) {
         // 拔下右节点
-        let mut right = self.right.take().unwrap();
+        let right = { self.right.take().unwrap().as_mut() };
 
         // 中结点链接到当前节点右侧
-        self.right = (*right.as_ptr()).left.take();
+        self.right = right.left.take();
 
         // 链接颜色旋转
-        (*right.as_ptr()).color = self.color.replce(Color::Red);
+        right.color = self.color.replce(Color::Red);
 
         // 交换节点指针所指堆空间的内容
-        mem::swap(self, right.as_mut());
+        mem::swap(self, right);
 
         // 衔接节点
-        self.left = Some(right);
+        self.left = Some(right.into());
     }
 
     unsafe fn rot_right(&mut self) {
         // 拔下左节点
-        let mut left = self.left.take().unwrap();
+        let left = { self.left.take().unwrap().as_mut() };
 
         // 中结点链接到当前节点左侧
-        self.left = (*left.as_ptr()).right.take();
+        self.left = left.right.take();
 
         // 链接颜色旋转
-        (*left.as_ptr()).color = self.color.replce(Color::Red);
+        left.color = self.color.replce(Color::Red);
 
         // 交换节点指针所指堆空间的内容
-        mem::swap(self, left.as_mut());
+        mem::swap(self, left);
 
         // 衔接节点
-        self.right = Some(left);
+        self.right = Some(left.into());
     }
 
     fn flip_color(&mut self) {
         self.color.rev();
         unsafe {
-            self.left.map(|left| (*left.as_ptr()).color.rev());
-            self.right.map(|right| (*right.as_ptr()).color.rev());
+            self.left.map(|mut left| left.as_mut().color.rev());
+            self.right.map(|mut right| right.as_mut().color.rev());
         }
     }
 
@@ -159,13 +159,13 @@ impl<K, V> Node<K, V> {
 
         // 寻找传入节点右子树的最小节点
         let mut successor: NonNull<Self> = self.right.unwrap();
-        while let Some(left) = unsafe { (*successor.as_ptr()).left } {
+        while let Some(left) = unsafe { successor.as_mut().left } {
             successor = left;
         }
 
         unsafe {
-            mem::swap(&mut self.key, &mut (*successor.as_ptr()).key);
-            mem::swap(&mut self.value, &mut (*successor.as_ptr()).value);
+            mem::swap(&mut self.key, &mut successor.as_mut().key);
+            mem::swap(&mut self.value, &mut successor.as_mut().value);
         }
     }
 
