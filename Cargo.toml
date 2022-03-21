@@ -8,4 +8,5 @@ members = [
   "union_find",
   "sort",
   "number_theory",
+  "combinatorics",
 ]
