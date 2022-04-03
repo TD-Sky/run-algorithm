@@ -1,7 +1,9 @@
 use super::DiGraph;
-#[test]
-fn dfs() {
+use std::collections::VecDeque;
+
+fn sample() -> DiGraph<()> {
     let mut digraph: DiGraph<()> = DiGraph::new();
+
     digraph.add_edge((0, 2), (), ());
     digraph.add_edge((0, 1), (), ());
     digraph.add_edge((0, 5), (), ());
@@ -10,5 +12,14 @@ fn dfs() {
     digraph.add_edge((2, 4), (), ());
     digraph.add_edge((2, 1), (), ());
     digraph.add_edge((2, 3), (), ());
-    digraph.shortest_path(0, 5).unwrap(); // [0, 5]
+
+    digraph
+}
+
+#[test]
+fn shortest_path() {
+    let digraph = sample();
+    let path = VecDeque::from([0, 5]);
+
+    assert_eq!(digraph.shortest_path(0, 5), Ok(path));
 }
