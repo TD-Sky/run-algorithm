@@ -1,57 +1,70 @@
 use std::collections::HashMap;
+use std::convert::From;
+use std::iter::FromIterator;
+use std::ops::AddAssign;
+use std::ptr::NonNull;
 
+type NodeID = u32;
+
+#[derive(Debug)]
 pub struct UF {
-    parents: HashMap<u32, Option<u32>>,
-    verts: HashMap<u32, usize>,
+    parent_of: HashMap<NodeID, NodeID>,
+    weight_of: HashMap<NodeID, usize>,
 }
 
-#[allow(dead_code)]
+impl FromIterator<NodeID> for UF {
+    fn from_iter<T: IntoIterator<Item = NodeID>>(iter: T) -> Self {
+        let mut weight_of = HashMap::new();
+
+        for id in iter {
+            weight_of.insert(id, 1);
+        }
+
+        Self {
+            parent_of: HashMap::new(),
+            weight_of,
+        }
+    }
+}
+
+impl<const N: usize> From<[NodeID; N]> for UF {
+    fn from(src: [NodeID; N]) -> Self {
+        UF::from_iter(src.into_iter())
+    }
+}
+
 impl UF {
-    pub fn new(vids: &Vec<u32>) -> Self {
-        let mut parents = HashMap::with_capacity(vids.len());
-        let mut verts = HashMap::with_capacity(vids.len());
-        for v in vids {
-            parents.insert(*v, None);
-            verts.insert(*v, 1);
+    pub fn find(&self, mut id: NodeID) -> NodeID {
+        while let Some(&parent) = self.parent_of.get(&id) {
+            id = parent;
         }
-        Self { parents, verts }
+
+        id
     }
 
-    pub fn connected(&self, v_1: u32, v_2: u32) -> bool {
-        self.find(v_1) == self.find(v_2)
+    pub fn connected(&self, id1: NodeID, id2: NodeID) -> bool {
+        self.find(id1) == self.find(id2)
     }
 
-    pub fn find(&self, mut vid: u32) -> u32 {
-        while let Some(parent) = self.parents.get(&vid) {
-            match parent {
-                Some(parent_id) => vid = *parent_id,
-                None => return vid,
-            }
-        }
-        vid
-    }
+    pub fn union(&mut self, id1: NodeID, id2: NodeID) {
+        let root1 = self.find(id1);
+        let root2 = self.find(id2);
 
-    pub fn union(&mut self, v_1: u32, v_2: u32) {
-        let root_1 = self.find(v_1);
-        let root_2 = self.find(v_2);
-
-        let vs_1 = self.verts.get(&root_1).copied().unwrap();
-        let vs_2 = self.verts.get(&root_2).copied().unwrap();
-
-        if root_1 == root_2 {
+        if root1 == root2 {
             return;
         }
 
-        if vs_1 < vs_2 {
-            self.parents.entry(root_1).and_modify(|v| {
-                v.replace(root_2);
-            });
-            self.verts.entry(root_2).and_modify(|vs| *vs += vs_1);
-        } else {
-            self.parents.entry(root_2).and_modify(|v| {
-                v.replace(root_1);
-            });
-            self.verts.entry(root_1).and_modify(|vs| *vs += vs_2);
+        let mut weight1: NonNull<usize> = self.weight_of.get_mut(&root1).unwrap().into();
+        let mut weight2: NonNull<usize> = self.weight_of.get_mut(&root2).unwrap().into();
+
+        unsafe {
+            if *weight1.as_ptr() >= *weight2.as_ptr() {
+                self.parent_of.insert(root2, root1);
+                weight1.as_mut().add_assign(*weight2.as_ptr());
+            } else {
+                self.parent_of.insert(root1, root2);
+                weight2.as_mut().add_assign(*weight1.as_ptr());
+            }
         }
     }
 }
