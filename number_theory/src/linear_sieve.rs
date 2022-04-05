@@ -6,21 +6,13 @@ pub fn linear_sieve(to: u32) -> Vec<u32> {
     let mut primes = Vec::new();
 
     for i in 2..=to {
-        // 只有筛掉的数才认为是合数
-        // 未加入的数一律假设为质数
         if !composites.contains(&i) {
             primes.push(i);
         }
 
-        for &prime in primes.iter() {
-            if i * prime > to {
-                break;
-            }
-
-            // 质数一定会筛掉自己的平方
+        for &prime in primes.iter().take_while(|&p| i * p <= to) {
             composites.insert(i * prime);
 
-            // 若非最小质因数筛选，则终止
             if i % prime == 0 {
                 break;
             }
