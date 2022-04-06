@@ -7,10 +7,12 @@ Algorithms implemented in Rust. Only used for practice.
     - [ ] Depth-First Search
     - [x] Breadth-First Search(./graph/src/digraph/mod.rs)
 - [x] [Undirected graph](./graph/src/ungraph/mod.rs)
-    - [x] [Prim's minimum spanning tree](./graph/src/ungraph/mst.rs)
-    - [x] [Lazy Prim's minimum spanning tree](./graph/src/ungraph/mst.rs)
-    - [x] [Kruskal's minimum spanning tree](./graph/src/ungraph/mst.rs)
-        - [x] [Union find](./union_find/src/lib.rs)
+    - [x] [Prim's minimum spanning tree](./graph/src/ungraph/mst/prim.rs)
+    - [x] [Lazy Prim's minimum spanning tree](./graph/src/ungraph/mst/lazy_prim.rs)
+    - [x] [Kruskal's minimum spanning tree](./graph/src/ungraph/mst/kruskal.rs)
+
+## Union find
+- [x] [Union find](./union_find/src/lib.rs)
 
 ## Hash map
 - [x] [Chain hash map](./hash_map/src/chain_hash_map.rs)
@@ -39,3 +41,8 @@ Algorithms implemented in Rust. Only used for practice.
 
 ## Number Theory
 - [x] [Monotonic](./number_theory/src/monotonic.rs)
+- [x] [Linear sieve](./number_theory/src/linear_sieve.rs)
+
+## Combinatorics
+- [x] [Permutation](./combinatorics/src/permutation.rs)
+
