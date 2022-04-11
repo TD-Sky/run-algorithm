@@ -1,10 +1,10 @@
-#[allow(dead_code)]
 pub fn insertion<T: Ord>(arr: &mut [T]) {
-    for right in 1..arr.len() {
-        for left in (1..=right).rev() {
-            if arr[left - 1] > arr[left] {
-                arr.swap(left, left - 1);
-            }
+    for out in 1..arr.len() {
+        let mut n = out;
+        while out > 0 && arr[n] < arr[n - 1] {
+            arr.swap(n, n - 1);
+
+            n -= 1;
         }
     }
 }

@@ -1,51 +1,72 @@
-fn sink<T: Ord>(arr: &mut [T], mut idx: usize, size: usize) {
-    while 2 * idx <= size {
-        let mut child = 2 * idx;
-        // 确认子节点不在队尾，再取最大子节点
-        if (child != size) && (arr[child] < arr[child + 1]) {
-            child += 1;
-        }
-        // 下沉直到终点为止
-        if arr[idx] < arr[child] {
-            arr.swap(idx, child);
-            idx = child;
-        } else {
+fn sink<T: Ord>(arr: &mut [T], mut parent: usize) {
+    let last = arr.len() - 1;
+
+    loop {
+        let left = 2 * parent + 1;
+
+        if left > last {
             break;
         }
+
+        let right = left + 1;
+
+        // 确认左子节点不为最后父节点，
+        // 再取最大子节点
+        let max = match left != last && arr[right] > arr[left] {
+            true => right,
+            false => left,
+        };
+
+        // 将传入的根下沉到终点
+        if arr[parent] < arr[max] {
+            arr.swap(parent, max);
+        }
+
+        parent = max;
     }
+
+    // 局部堆有序了
 }
 
-#[allow(dead_code)]
 pub fn heap<T: Ord>(arr: &mut [T]) {
-    // 剔除哨兵位获得真长度
-    let mut size = arr.len() - 1;
-    // 遍历时避开叶子
-    for idx in (1..=size / 2).rev() {
-        sink(arr, idx, size);
+    let len = arr.len();
+
+    if len < 2 {
+        return;
     }
-    while size > 1 {
+
+    // 构建大顶堆
+    // 从底向顶遍历所有父节点
+    for parent in (0..=len / 2 - 1).rev() {
+        sink(arr, parent);
+    }
+
+    for end in (1..len).rev() {
         // 释放最大节点至数组末
-        arr.swap(1, size);
-        // 出队，收窄队列
-        size -= 1;
-        // 重新让堆有序
-        sink(arr, 1, size);
+        arr.swap(0, end);
+
+        // 重新堆化
+        sink(&mut arr[..end], 0);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::heap;
+
     #[test]
     fn empty() {
-        let mut nothing: [u32; 1] = [0];
-        heap(&mut nothing);
+        let mut arr: [u32; 0] = [];
+
+        heap(&mut arr);
     }
 
     #[test]
     fn basic() {
         let mut arr: [u32; 11] = [0, 2, 5, 9, 8, 7, 4, 3, 10, 16, 13];
+
         heap(&mut arr);
+
         assert_eq!(arr, [0, 2, 3, 4, 5, 7, 8, 9, 10, 13, 16]);
     }
 }

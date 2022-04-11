@@ -1,13 +1,6 @@
-#[allow(dead_code)]
 pub fn selection<T: Ord>(arr: &mut [T]) {
-    let len = arr.len();
-    for left in 0..len {
-        let mut min = left;
-        for right in (left + 1)..len {
-            if arr[min] > arr[right] {
-                min = right;
-            }
-        }
+    for left in 0..arr.len() {
+        let min = (left..arr.len()).min_by_key(|&i| &arr[i]).unwrap();
         arr.swap(left, min);
     }
 }

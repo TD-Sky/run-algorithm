@@ -1,110 +1,66 @@
-macro_rules! get_then_inc {
-    ($num: ident) => {{
-        let past = $num;
-        $num += 1;
-        past
-    }};
+use std::mem;
+
+pub fn msort<T: Ord + Clone>(arr: &mut [T]) {
+    let mut aux: Vec<T> = arr.into();
+
+    merge(arr, &mut aux);
 }
 
-#[allow(dead_code)]
-pub enum Order {
-    TB,
-    BT,
-}
+fn merge<T: Ord + Clone>(arr: &mut [T], aux: &mut [T]) {
+    let len = arr.len();
 
-pub use Order::{BT, TB};
+    if len < 2 {
+        return;
+    }
 
-pub struct MergeSort<'a, T: Ord + Clone> {
-    aux: Vec<T>,
-    arr: &'a mut [T],
-}
+    let mid = len / 2;
 
-impl<'a, T> MergeSort<'a, T>
-where
-    T: Ord + Clone,
-{
-    fn sort_bottom_to_top(&mut self) {
-        let len = self.arr.len();
-        // 子数组的长度，同一循环内子数组按 size 切分
-        for size in (0u32..).map(|n| 2usize.pow(n)).take_while(|&sz| sz < len) {
-            // 两两归并子数组，故 low 为左数组首索引
-            for low in (0..(len - size)).step_by(size * 2) {
-                // 两两归并时，右子数组长度可能为 [0, size]
-                self.merge(low, low + size - 1, (low + size * 2 - 1).min(len - 1));
-            }
+    let (arr_l, arr_r) = arr.split_at_mut(mid);
+    let (aux_l, aux_r) = aux.split_at_mut(mid);
+
+    merge(arr_l, aux_l);
+    merge(arr_r, aux_r);
+
+    let mut left = 0;
+    let mut right = mid;
+
+    for x in aux.iter_mut() {
+        if left >= mid || (right < len && arr[left] > arr[right]) {
+            mem::swap(x, &mut arr[right]);
+            right += 1;
+        } else {
+            mem::swap(x, &mut arr[left]);
+            left += 1;
         }
     }
 
-    fn sort_top_to_bottom(&mut self, low: usize, high: usize) {
-        if low != high {
-            let mid = (low + high) / 2;
-            self.sort_top_to_bottom(low, mid);
-            self.sort_top_to_bottom(mid + 1, high);
-            self.merge(low, mid, high);
-        }
-    }
-
-    fn merge(&mut self, low: usize, mid: usize, high: usize) {
-        let mut left = low;
-        let mut right = mid + 1;
-
-        // 把辅助数组的元素有序放回原数组
-        // right 或 left 的自增代表消耗子数组
-        for i in low..=high {
-            self.arr[i] = if left > mid {
-                self.aux[get_then_inc!(right)].clone()
-            } else if right > high {
-                self.aux[get_then_inc!(left)].clone()
-            } else if self.aux[left] > self.aux[right] {
-                self.aux[get_then_inc!(right)].clone()
-            } else {
-                self.aux[get_then_inc!(left)].clone()
-            };
-        }
-    }
-}
-
-#[allow(dead_code)]
-impl<'a, T> MergeSort<'a, T>
-where
-    T: Ord + Clone,
-{
-    pub fn new(arr: &'a mut [T]) -> Self {
-        let mut aux = Vec::with_capacity(arr.len());
-        aux.clone_from_slice(arr);
-
-        Self { aux, arr }
-    }
-
-    pub fn run(mut self, order: Order) {
-        match order {
-            TB => self.sort_top_to_bottom(0, self.arr.len() - 1),
-            BT => self.sort_bottom_to_top(),
-        };
-    }
+    arr.clone_from_slice(aux);
 }
 
 #[cfg(test)]
 mod tests {
-    use super::MergeSort;
+    use super::msort;
 
     #[test]
-    fn test_bt() {
-        let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
-        MergeSort::new(&mut arr).run(super::BT);
-        assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
-    }
-
-    #[test]
-    fn test_empty() {
+    fn empty() {
         let mut arr: [u32; 0] = [];
-        MergeSort::new(&mut arr).run(super::BT);
+
+        msort(arr.as_mut_slice());
     }
 
     #[test]
-    fn test_tb() {
+    fn single() {
+        let mut arr = [1];
+
+        msort(arr.as_mut_slice());
+    }
+
+    #[test]
+    fn top_to_btm() {
         let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
-        MergeSort::new(&mut arr).run(super::TB);
+
+        msort(&mut arr);
+
         assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
     }
 }

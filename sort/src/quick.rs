@@ -2,15 +2,15 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::cmp::Ordering;
 
-pub fn quick<T: Ord + Clone>(arr: &mut [T]) {
+pub fn qsort<T: Ord + Clone>(arr: &mut [T]) {
     // 打乱数组，防止最坏情况出现
     let mut rng = thread_rng();
     arr.shuffle(&mut rng);
 
-    qsort(arr);
+    quick(arr);
 }
 
-fn qsort<T: Ord + Clone>(part: &mut [T]) {
+fn quick<T: Ord + Clone>(part: &mut [T]) {
     if part.len() <= 1 {
         return;
     }
@@ -41,31 +41,36 @@ fn qsort<T: Ord + Clone>(part: &mut [T]) {
     }
 
     // 相等区间(含有样本元素)不再参与递归
-    qsort(&mut part[0..lt]);
-    qsort(&mut part[(gt + 1)..]);
+    quick(&mut part[0..lt]);
+    quick(&mut part[(gt + 1)..]);
 }
 
 #[cfg(test)]
 mod tests {
-    use super::quick;
+    use super::qsort;
 
     #[test]
     fn test_empty() {
         let mut arr: [u32; 0] = [];
-        quick(&mut arr);
+
+        qsort(&mut arr);
     }
 
     #[test]
     fn test_normal() {
         let mut arr = [7, 5, 9, 8, 2, 4, 3, 10, 16, 13, 17, 14, 6u32];
-        quick(&mut arr);
+
+        qsort(&mut arr);
+
         assert_eq!(arr, [2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 17]);
     }
 
     #[test]
     fn test_chars() {
         let mut arr: Vec<char> = "RBWWRWBRRWBR".chars().collect();
-        quick(&mut arr);
+
+        qsort(&mut arr);
+
         assert_eq!(String::from_iter(arr), "BBBRRRRRWWWW");
     }
 }

@@ -1,11 +1,19 @@
-#[allow(dead_code)]
 pub fn bubble<T: Ord>(arr: &mut [T]) {
-    let len = arr.len();
-    for out in 1..len {
-        for n in 0..(len - out) {
-            if arr[n] > arr[n + 1] {
-                arr.swap(n, n + 1);
+    for out in 1..arr.len() {
+        let mut swapped = false;
+
+        for i in 0..(arr.len() - out) {
+            if arr[i] > arr[i + 1] {
+                arr.swap(i, i + 1);
+
+                // 发生了交换
+                swapped = true;
             }
+        }
+
+        // 内循环没交换，说明排序完成
+        if !swapped {
+            break;
         }
     }
 }
