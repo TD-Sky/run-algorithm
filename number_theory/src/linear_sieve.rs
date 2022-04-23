@@ -1,8 +1,8 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 // param: to >= 2
 pub fn linear_sieve(to: u32) -> Vec<u32> {
-    let mut composites = HashSet::new();
+    let mut composites = BTreeSet::new();
     let mut primes = Vec::new();
 
     for i in 2..=to {
