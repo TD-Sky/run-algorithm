@@ -1,12 +1,11 @@
-use crate::{NodeID, UnGraph, WeiEdge, Weight};
-use priority_queue::PriorityQueue;
+use crate::{NodeID, UnGraph, WeiEdge};
 use std::cmp::Reverse;
-use std::collections::HashSet;
+use std::collections::{BinaryHeap, HashSet};
 
 struct LazyPrimMST<'a, V> {
     graph: &'a UnGraph<V>,
     marked: HashSet<NodeID>,
-    pq: PriorityQueue<&'a WeiEdge, Reverse<Weight>>,
+    pq: BinaryHeap<Reverse<&'a WeiEdge>>,
 }
 
 impl<'a, V> LazyPrimMST<'a, V> {
@@ -14,7 +13,7 @@ impl<'a, V> LazyPrimMST<'a, V> {
         Self {
             graph,
             marked: HashSet::with_capacity(graph.node_count()),
-            pq: PriorityQueue::new(),
+            pq: BinaryHeap::new(),
         }
     }
 
@@ -22,7 +21,7 @@ impl<'a, V> LazyPrimMST<'a, V> {
         // 记录不属于生成树的边
         for edge in self.graph.adj_edges(start) {
             if !self.marked.contains(&edge.other(start)) {
-                self.pq.push(edge, Reverse(edge.weight));
+                self.pq.push(Reverse(edge));
             }
         }
     }
@@ -35,7 +34,7 @@ pub(in crate::ungraph) fn span<'a, V>(graph: &'a UnGraph<V>, root: NodeID) -> Ve
     mst.marked.insert(root);
     mst.visit(root); // 将根节点的所有邻接边加入优先队列
 
-    while let Some((wei_edge, _)) = mst.pq.pop() {
+    while let Some(Reverse(wei_edge)) = mst.pq.pop() {
         // 边优先队列的入队操作由标记点引发，
         // 故每次循环最多只有一个未标记点；
         // 标记最小边新端点，记录它们的邻接边；

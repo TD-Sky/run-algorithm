@@ -1,5 +1,6 @@
-#![feature(bool_to_option, let_chains)]
+#![feature(let_chains, map_first_last)]
 
+use std::cmp::Ordering;
 use std::fmt;
 
 mod digraph;
@@ -9,10 +10,28 @@ pub type NodeID = u32;
 pub type Edge = (NodeID, NodeID);
 pub type Weight = i32;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug, Hash, Eq)]
 pub struct WeiEdge {
     pub edge: Edge,
     pub weight: Weight,
+}
+
+impl PartialEq for WeiEdge {
+    fn eq(&self, other: &Self) -> bool {
+        self.weight == other.weight
+    }
+}
+
+impl PartialOrd for WeiEdge {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.weight.partial_cmp(&other.weight)
+    }
+}
+
+impl Ord for WeiEdge {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.weight.cmp(&other.weight)
+    }
 }
 
 impl WeiEdge {
